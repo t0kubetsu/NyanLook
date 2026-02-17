@@ -1,8 +1,14 @@
-export interface LocationData {
+export interface LocationPoint {
   latitude: number;
   longitude: number;
   timestamp: number;
   device_id: string;
+}
+
+export interface LocationHistory {
+  device_id: string;
+  count: number;
+  history: LocationPoint[];
 }
 
 export interface DeviceSummary {

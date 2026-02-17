@@ -1,8 +1,14 @@
-import type { Device, DeviceInfos, DevicesResponse } from "@/types/device";
+import type {
+  Device,
+  DeviceDetails,
+  DevicesResponse,
+  LocationHistory,
+  LocationPoint,
+} from "@/types/device";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
@@ -10,8 +16,6 @@ class ApiError extends Error {
     super(message);
   }
 }
-
-// ── Core fetcher ──────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(
   path: string,
@@ -26,37 +30,36 @@ async function apiFetch<T>(
       ...options.headers,
     },
   });
-
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.detail ?? res.statusText);
   }
-
   return res.json() as Promise<T>;
 }
-
-// ── Auth ──────────────────────────────────────────────────────────────────────
 
 export async function loginRequest(
   username: string,
   password: string,
 ): Promise<string> {
-  const res = await fetch(`${API_URL}/auth/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ username, password }),
-  });
-
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/auth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ username, password }),
+    });
+  } catch (err) {
+    throw new ApiError(0, `Cannot reach API at ${API_URL}. (${err})`);
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.detail ?? "Login failed");
   }
-
   const data = await res.json();
+  if (!data.access_token)
+    throw new ApiError(0, `Unexpected response: ${JSON.stringify(data)}`);
   return data.access_token as string;
 }
-
-// ── Devices ───────────────────────────────────────────────────────────────────
 
 export async function fetchDevices(token: string): Promise<Device[]> {
   const data = await apiFetch<DevicesResponse>("/devices", token);
@@ -66,8 +69,18 @@ export async function fetchDevices(token: string): Promise<Device[]> {
 export async function fetchDeviceDetails(
   token: string,
   deviceId: string,
-): Promise<DeviceInfos> {
-  return apiFetch<DeviceInfos>(`/device/${deviceId}/details`, token);
+): Promise<DeviceDetails> {
+  return apiFetch<DeviceDetails>(`/device/${deviceId}/details`, token);
 }
 
-export { ApiError };
+export async function fetchLocationHistory(
+  token: string,
+  deviceId: string,
+  limit = 100,
+): Promise<LocationPoint[]> {
+  const data = await apiFetch<LocationHistory>(
+    `/device/${deviceId}/location/history?limit=${limit}`,
+    token,
+  );
+  return data.history;
+}
