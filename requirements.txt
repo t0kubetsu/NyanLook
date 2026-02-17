@@ -1,0 +1,5 @@
+bcrypt
+fastapi[standard]
+python-jose[cryptography] 
+python-multipart
+redis
