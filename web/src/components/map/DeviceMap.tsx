@@ -1,7 +1,7 @@
 "use client";
 
-import type { Device, LocationPoint } from "@/types/device";
 import L from "leaflet";
+import type { Device, LocationPoint } from "@/types/device";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 
@@ -30,7 +30,9 @@ function makeIcon(platform: string, active: boolean): L.DivIcon {
         <span style="position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
           border:5px solid transparent;border-top-color:${borderColor};"></span>
       </div>`,
-    iconSize: [38, 47], iconAnchor: [19, 47], popupAnchor: [0, -49],
+    iconSize: [38, 47],
+    iconAnchor: [19, 47],
+    popupAnchor: [0, -49],
   });
 }
 
@@ -55,21 +57,32 @@ interface Props {
   onSelect: (deviceId: string) => void;
 }
 
-export default function DeviceMap({ devices, activeId, locationHistory, onSelect }: Props) {
+export default function DeviceMap({
+  devices,
+  activeId,
+  locationHistory,
+  onSelect,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const historyLayerRef = useRef<L.LayerGroup | null>(null);
   const onSelectRef = useRef(onSelect);
-  useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
 
   // ── Init map ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const map = L.map(containerRef.current, { zoomControl: false }).setView([20, 10], 2);
+    const map = L.map(containerRef.current, { zoomControl: false }).setView(
+      [20, 10],
+      2,
+    );
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors", maxZoom: 19,
+      attribution: "© OpenStreetMap contributors",
+      maxZoom: 19,
     }).addTo(map);
     L.control.zoom({ position: "topright" }).addTo(map);
 
@@ -77,7 +90,11 @@ export default function DeviceMap({ devices, activeId, locationHistory, onSelect
     mapRef.current = map;
     setTimeout(() => map.invalidateSize(), 100);
 
-    return () => { map.remove(); mapRef.current = null; markersRef.current.clear(); };
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersRef.current.clear();
+    };
   }, []);
 
   // ── Sync device markers ────────────────────────────────────────────────────
@@ -98,7 +115,9 @@ export default function DeviceMap({ devices, activeId, locationHistory, onSelect
         existing.setLatLng([latitude, longitude]);
         existing.setIcon(makeIcon(platform, isActive));
       } else {
-        const marker = L.marker([latitude, longitude], { icon: makeIcon(platform, isActive) })
+        const marker = L.marker([latitude, longitude], {
+          icon: makeIcon(platform, isActive),
+        })
           .addTo(map)
           .on("click", () => onSelectRef.current(device_id));
         markersRef.current.set(device_id, marker);
@@ -106,7 +125,10 @@ export default function DeviceMap({ devices, activeId, locationHistory, onSelect
     }
 
     for (const [id, marker] of markersRef.current) {
-      if (!seen.has(id)) { marker.remove(); markersRef.current.delete(id); }
+      if (!seen.has(id)) {
+        marker.remove();
+        markersRef.current.delete(id);
+      }
     }
   }, [devices, activeId]);
 
@@ -122,16 +144,23 @@ export default function DeviceMap({ devices, activeId, locationHistory, onSelect
     const map = mapRef.current;
     if (!map) return;
 
-    const sorted = [...locationHistory].sort((a, b) => a.timestamp - b.timestamp);
-    const latlngs: L.LatLngTuple[] = sorted.map((p) => [p.latitude, p.longitude]);
+    const sorted = [...locationHistory].sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
+    const latlngs: L.LatLngTuple[] = sorted.map((p) => [
+      p.latitude,
+      p.longitude,
+    ]);
 
     for (let i = 1; i < sorted.length; i++) {
       const progress = i / (sorted.length - 1);
       const opacity = 0.15 + progress * 0.75;
 
       L.polyline(
-        [[sorted[i - 1].latitude, sorted[i - 1].longitude],
-        [sorted[i].latitude, sorted[i].longitude]],
+        [
+          [sorted[i - 1].latitude, sorted[i - 1].longitude],
+          [sorted[i].latitude, sorted[i].longitude],
+        ],
         { color: "#00e5ff", weight: 2, opacity },
       ).addTo(layer);
     }
@@ -147,7 +176,9 @@ export default function DeviceMap({ devices, activeId, locationHistory, onSelect
       });
 
       dot.bindTooltip(new Date(point.timestamp).toLocaleTimeString(), {
-        permanent: false, direction: "top", offset: [0, -6],
+        permanent: false,
+        direction: "top",
+        offset: [0, -6],
         className: "leaflet-history-tooltip",
       });
 
@@ -161,7 +192,10 @@ export default function DeviceMap({ devices, activeId, locationHistory, onSelect
   useEffect(() => {
     if (!activeId || !mapRef.current || locationHistory.length > 0) return;
     const device = devices.find((d) => d.device_id === activeId);
-    if (device) mapRef.current.flyTo([device.latitude, device.longitude], 13, { duration: 1 });
+    if (device)
+      mapRef.current.flyTo([device.latitude, device.longitude], 13, {
+        duration: 1,
+      });
   }, [activeId, devices, locationHistory]);
 
   return (
@@ -176,7 +210,10 @@ export default function DeviceMap({ devices, activeId, locationHistory, onSelect
         }
         .leaflet-history-tooltip::before { display: none; }
       `}</style>
-      <div ref={containerRef} style={{ width: "100%", height: "100%", minHeight: "400px" }} />
+      <div
+        ref={containerRef}
+        style={{ width: "100%", height: "100%", minHeight: "400px" }}
+      />
     </>
   );
 }

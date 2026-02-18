@@ -13,9 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" style={{ height: "100%" }}>
-      <body style={{ height: "100%", margin: 0, padding: 0 }}>
-        {children}
-      </body>
+      <body style={{ height: "100%", margin: 0, padding: 0 }}>{children}</body>
     </html>
   );
 }
