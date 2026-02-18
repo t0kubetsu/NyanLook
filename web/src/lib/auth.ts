@@ -8,13 +8,27 @@ export function getToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export function setToken(token: string): void {
-  // 24 h lifetime, SameSite=Strict, no httpOnly so middleware can read it client-side.
-  // If your Next.js app and API are same-origin in prod, add Secure.
+export async function setToken(token: string): Promise<void> {
   const maxAge = 60 * 60 * 24;
-  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=/; max-age=${maxAge}; SameSite=Strict`;
+  if (typeof cookieStore !== "undefined") {
+    await cookieStore.set({
+      name: COOKIE_NAME,
+      value: token,
+      expires: Date.now() + maxAge * 1000,
+      path: "/",
+      sameSite: "strict",
+    });
+  } else {
+    // biome-ignore lint/suspicious/noDocumentCookie: fallback for browsers without Cookie Store API
+    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=/; max-age=${maxAge}; SameSite=Strict`;
+  }
 }
 
-export function clearToken(): void {
-  document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`;
+export async function clearToken(): Promise<void> {
+  if (typeof cookieStore !== "undefined") {
+    await cookieStore.delete({ name: COOKIE_NAME, path: "/" });
+  } else {
+    // biome-ignore lint/suspicious/noDocumentCookie: fallback for browsers without Cookie Store API
+    document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`;
+  }
 }
