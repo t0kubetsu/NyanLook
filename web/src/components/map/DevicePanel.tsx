@@ -123,7 +123,9 @@ export default function DevicePanel({
               stroke="#00e5ff"
               strokeWidth="2.5"
               className="flex-shrink-0"
+              aria-labelledby="trail-icon-title"
             >
+              <title id="trail-icon-title">Location trail</title>
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
             <span className="font-mono text-[10px] text-slate-400">
