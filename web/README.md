@@ -1,6 +1,6 @@
 # 🐱✨ NyanLook Frontend
 
-**NyanLook Frontend** is a web dashboard built with **Next.js** to visualize GPS data and device details collected by the NyanTrack mobile app and served by the NyanLook API.
+**NyanLook Frontend** is a web dashboard built with **Next.js** to visualize GPS data and device details collected by the [NyanTrack](https://github.com/t0kubetsu/NyanTrack) mobile app and served by the NyanLook API.
 
 It provides:
 

@@ -1,6 +1,6 @@
 # 🐱✨ NyanLook API
 
-**NyanLook API** is a FastAPI backend designed to receive telemetry data from **NyanCat** (mobile client) and expose secure endpoints to query GPS locations and device details.
+**NyanLook API** is a FastAPI backend designed to receive telemetry data from [**NyanCat**](https://github.com/t0kubetsu/NyanTrack) (mobile client) and expose secure endpoints to query GPS locations and device details.
 
 It supports:
 
