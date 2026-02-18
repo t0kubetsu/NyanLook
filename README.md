@@ -23,7 +23,7 @@ It supports:
 ├── api              # FastAPI backend (NyanLook API)
 ├── web              # Next.js frontend (NyanLook Frontend)
 ├── docker-compose.yml
-└── README.md        # (this file)
+└── README.md 
 ```
 
 ---
