@@ -16,9 +16,6 @@ device_storage = DeviceStorage(get_kvstore())
 Protected = Annotated[str, Depends(require_auth)]
 
 
-# ── PUBLIC ─────────────────────────────────────────────────────────────────────
-
-
 @router.post("/auth/token", response_model=Token, tags=["auth"])
 async def get_token(token: Annotated[Token, Depends(login)]):
     return token
@@ -53,9 +50,6 @@ async def catch_all_post(full_path: str, request: Request):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-
-# ── PROTECTED ──────────────────────────────────────────────────────────────────
 
 
 @router.get("/devices", tags=["devices"])
