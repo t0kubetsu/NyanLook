@@ -49,24 +49,59 @@ http://localhost:8000/docs
 ---
 
 ## ⚙️ Configuration (Environment Variables)
-
 NyanLook API uses the following environment variables:
-
 ```env
 KVROCKS_HOST=kvrocks
 KVROCKS_PORT=6666
 CORS_ORIGINS=http://localhost:3000
+JWT_SECRET_KEY=changeme-use-a-real-secret-in-prod
+APP_USERNAME=admin
+APP_PASSWORD_HASH=$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW
+JWT_EXPIRE_MINUTES=1440
 ```
 
-* **`KVROCKS_HOST`**: Hostname or IP of your Kvrocks instance
-* **`KVROCKS_PORT`**: Kvrocks port
-* **`CORS_ORIGINS`**: Allowed CORS origins (comma-separated if multiple)
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `KVROCKS_HOST` | `kvrocks` | Hostname or IP of your Kvrocks instance |
+| `KVROCKS_PORT` | `6666` | Kvrocks port |
+| `CORS_ORIGINS` | `http://localhost:3000` | Allowed CORS origins (comma-separated if multiple) |
+| `JWT_SECRET_KEY` | `changeme-use-a-real-secret-in-prod` | Secret key used to sign JWT tokens — **change this in production** |
+| `APP_USERNAME` | `admin` | Login username |
+| `APP_PASSWORD_HASH` | *(bcrypt hash of `secret`)* | Bcrypt hash of the login password — see [Generating a Password Hash](#-generating-a-password-hash) |
+| `JWT_EXPIRE_MINUTES` | `1440` | Token expiry duration in minutes (default: 24h) |
+
+> ⚠️ **Never use the default `JWT_SECRET_KEY` in production.** Generate a strong random key, e.g.:
+> ```bash
+> openssl rand -hex 32
+> ```
 
 ---
 
 ## 🔐 Authentication
 
 NyanLook API uses OAuth2 password flow.
+
+### 🔑 Generating a Password Hash
+
+Before deploying, generate a bcrypt hash for your chosen password:
+```bash
+python -c "from passlib.context import CryptContext; print(CryptContext(schemes=['bcrypt']).hash('yourpassword'))"
+```
+
+This will output a hash like:
+```
+$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW
+```
+
+Then set the following environment variables (e.g. in your `.env` file or `docker-compose.yml`):
+```env
+APP_USERNAME=admin
+APP_PASSWORD_HASH=$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW
+JWT_SECRET_KEY=your-secret-key
+JWT_EXPIRE_MINUTES=1440
+```
+
+> ⚠️ **Docker Compose note:** if you inline the hash directly in `docker-compose.yml` under `environment:`, escape every `$` as `$$` to prevent variable interpolation. Using an `env_file` is recommended instead.
 
 ### Get Token
 
