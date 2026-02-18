@@ -54,20 +54,16 @@ async def catch_all_post(full_path: str, request: Request):
 
 @router.get("/devices", tags=["devices"])
 async def get_all_devices(_: Protected):
-    device_ids = location_storage.get_all_active_devices()
+    device_ids = device_storage.get_all_registered_devices()
     devices = []
     for device_id in device_ids:
         latest_location = location_storage.get_latest_location(device_id)
         device_summary = device_storage.get_device_summary(device_id)
-        if not latest_location:
-            continue
         devices.append(
             {
                 "device_id": device_id,
-                "latitude": latest_location["latitude"],
-                "longitude": latest_location["longitude"],
-                "timestamp": latest_location["timestamp"],
-                "infos": device_summary or {},
+                "location": latest_location,
+                **device_summary,
             }
         )
     return {"count": len(devices), "devices": devices}
@@ -78,11 +74,7 @@ async def get_device_infos(device_id: str, _: Protected):
     infos = device_storage.get_device_summary(device_id)
     if not infos:
         raise HTTPException(status_code=404, detail="Device not found")
-    latest_location = location_storage.get_latest_location(device_id)
-    if latest_location:
-        infos["latitude"] = latest_location["latitude"]
-        infos["longitude"] = latest_location["longitude"]
-        infos["timestamp"] = latest_location["timestamp"]
+    infos["location"] = location_storage.get_latest_location(device_id)
     return infos
 
 

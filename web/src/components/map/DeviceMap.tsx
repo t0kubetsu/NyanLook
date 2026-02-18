@@ -15,9 +15,9 @@ function platformEmoji(platform: string): string {
 
 function makeIcon(platform: string, active: boolean): L.DivIcon {
   const emoji = platformEmoji(platform);
-  const borderColor = active ? "#ff4d6d" : "#00e5ff";
-  const glowColor = active ? "rgba(255,77,109,.5)" : "rgba(0,229,255,.4)";
-  const bg = active ? "rgba(255,77,109,.18)" : "rgba(0,229,255,.12)";
+  const borderColor = active ? "#00e5ff" : "#ff4d6d";
+  const glowColor = active ? "rgba(0,229,255,.4)" : "rgba(255,77,109,.5)";
+  const bg = active ? "rgba(0,229,255,.12)" : "rgba(255,77,109,.18)";
   return L.divIcon({
     className: "",
     html: `<div style="
@@ -104,19 +104,19 @@ export default function DeviceMap({
     const seen = new Set<string>();
 
     for (const device of devices) {
-      const { device_id, latitude, longitude } = device;
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+      const { device_id, location, active } = device;
+      if (!location || typeof location !== 'object') continue;
+      if (!Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) continue;
       seen.add(device_id);
-      const platform = device.infos?.summary?.platform ?? "";
-      const isActive = device_id === activeId;
+      const platform = device.summary?.platform ?? "";
       const existing = markersRef.current.get(device_id);
 
       if (existing) {
-        existing.setLatLng([latitude, longitude]);
-        existing.setIcon(makeIcon(platform, isActive));
+        existing.setLatLng([location.latitude, location.longitude]);
+        existing.setIcon(makeIcon(platform, active));
       } else {
-        const marker = L.marker([latitude, longitude], {
-          icon: makeIcon(platform, isActive),
+        const marker = L.marker([location.latitude, location.longitude], {
+          icon: makeIcon(platform, active),
         })
           .addTo(map)
           .on("click", () => onSelectRef.current(device_id));
@@ -192,10 +192,12 @@ export default function DeviceMap({
   useEffect(() => {
     if (!activeId || !mapRef.current || locationHistory.length > 0) return;
     const device = devices.find((d) => d.device_id === activeId);
-    if (device)
-      mapRef.current.flyTo([device.latitude, device.longitude], 13, {
+    if (device) {
+      if (!device.location || typeof device.location !== 'object') return;
+      mapRef.current.flyTo([device.location.latitude, device.location.longitude], 13, {
         duration: 1,
       });
+    }
   }, [activeId, devices, locationHistory]);
 
   return (

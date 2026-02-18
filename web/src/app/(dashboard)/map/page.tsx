@@ -181,27 +181,27 @@ export default function MapPage() {
         <nav className="flex-none flex gap-2 px-4 py-2.5 bg-[#111318]/90 border-t border-[#1e2230] overflow-x-auto backdrop-blur">
           {devices.map((device) => {
             const platform = (
-              device.infos?.summary?.platform ?? ""
+              device.summary?.platform ?? ""
             ).toLowerCase();
             const name =
-              device.infos?.display_name ?? device.device_id.slice(0, 14);
-            const isActive = device.device_id === activeId;
+              device.display_name ?? device.device_id.slice(0, 14);
+            const isActive = device.active;
             return (
               <button
                 key={device.device_id}
                 type="button"
                 onClick={() => selectDevice(device.device_id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border flex-shrink-0 transition-colors text-left ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1e2230] bg-[#0a0c10] flex-shrink-0 transition-colors text-left ${
                   isActive
-                    ? "border-rose-500/50 bg-rose-500/10"
-                    : "border-[#1e2230] bg-[#0a0c10] hover:border-cyan-500/50"
+                    ? "hover:border-cyan-500/50"
+                    : "hover:border-rose-500/50"
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                     isActive
-                      ? "bg-rose-400 shadow-[0_0_6px_theme(colors.rose.400)]"
-                      : "bg-cyan-400 shadow-[0_0_6px_theme(colors.cyan.400)]"
+                      ? "bg-cyan-400 shadow-[0_0_6px_theme(colors.cyan.400)]"
+                      : "bg-rose-400 shadow-[0_0_6px_theme(colors.rose.400)]"
                   }`}
                 />
                 <div>

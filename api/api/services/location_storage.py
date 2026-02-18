@@ -7,16 +7,19 @@ class LocationStorage:
     def __init__(self, redis_client):
         self.redis = redis_client
         self.LOCATION_PREFIX = "device:location:"
-        self.DEVICE_LIST_KEY = "devices:active"
+        self.DEVICE_REGISTRY_KEY = "devices:registered"
+        self.DEVICE_ACTIVE_PREFIX = "device:active:"
         self.HISTORY_PREFIX = "device:history:"
 
     def store_latest_location(self, device_id: str, data: dict) -> bool:
         try:
-            key = f"{self.LOCATION_PREFIX}{device_id}"
-            self.redis.set(key, json.dumps(data))
-            self.redis.expire(key, 3600)  # 1 hour
+            self.redis.set(f"{self.LOCATION_PREFIX}{device_id}", json.dumps(data))
 
-            self.redis.sadd(self.DEVICE_LIST_KEY, device_id)
+            self.redis.set(
+                f"{self.DEVICE_ACTIVE_PREFIX}{device_id}", 1, ex=300
+            )  # 5 minutes
+
+            self.redis.sadd(self.DEVICE_REGISTRY_KEY, device_id)
 
             return True
         except Exception as e:
@@ -54,13 +57,6 @@ class LocationStorage:
             return [json.loads(item) for item in data]
         except Exception as e:
             print(f"Error getting history: {e}")
-            return []
-
-    def get_all_active_devices(self) -> list:
-        try:
-            return list(self.redis.smembers(self.DEVICE_LIST_KEY))
-        except Exception as e:
-            print(f"Error getting devices: {e}")
             return []
 
     def get_device_stats(self, device_id: str) -> dict:

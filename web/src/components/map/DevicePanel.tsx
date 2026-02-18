@@ -73,10 +73,13 @@ export default function DevicePanel({
   historyLoading,
   onClose,
 }: Props) {
-  const summary = device.infos?.summary ?? {};
+  const summary = device.summary ?? {};
   const platform = (details?.platform ?? summary.platform ?? "").toLowerCase();
-  const displayName = device.infos?.display_name ?? device.device_id;
-  const lastSeen = new Date(device.timestamp).toLocaleString();
+  const displayName = device.display_name ?? device.device_id;
+  const hasLocation = device.location !== null;
+  const lastSeen = hasLocation
+    ? new Date(device.location!.timestamp).toLocaleString()
+    : null;
   const info = { ...summary, ...details };
 
   return (
@@ -146,11 +149,13 @@ export default function DevicePanel({
           <PlatformBadge platform={info.platform ?? "unknown"} />
         </div>
 
-        <Section title="Location">
-          <Row label="Latitude" value={device.latitude.toFixed(6)} />
-          <Row label="Longitude" value={device.longitude.toFixed(6)} />
-          <Row label="Last seen" value={lastSeen} />
-        </Section>
+        {hasLocation && (
+          <Section title="Location">
+            <Row label="Latitude" value={device.location!.latitude.toFixed(6)} />
+            <Row label="Longitude" value={device.location!.longitude.toFixed(6)} />
+            <Row label="Last seen" value={lastSeen} />
+          </Section>
+        )}
 
         {platform === "android" && (
           <Section title="Hardware">

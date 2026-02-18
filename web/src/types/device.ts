@@ -31,19 +31,13 @@ export interface DeviceSummary {
   language?: string;
 }
 
-export interface DeviceInfos {
+export interface Device {
   device_id: string;
+  location: LocationPoint | null;
   display_name: string;
   summary: DeviceSummary;
   last_seen?: string;
-}
-
-export interface Device {
-  device_id: string;
-  latitude: number;
-  longitude: number;
-  timestamp: number;
-  infos: DeviceInfos;
+  active: boolean;
 }
 
 export interface DevicesResponse {
