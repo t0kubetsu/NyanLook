@@ -12,7 +12,6 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "changeme-use-a-real-secret-in-prod")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24 h
 
-# Generate hash: python -c "from passlib.context import CryptContext; print(CryptContext(schemes=['bcrypt']).hash('yourpassword'))"
 APP_USERNAME = os.getenv("APP_USERNAME", "admin")
 APP_PASSWORD_HASH = os.getenv(
     "APP_PASSWORD_HASH",
