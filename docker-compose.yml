@@ -22,5 +22,16 @@ services:
     volumes:
       - kvrocks-data:/var/lib/kvrocks
 
+  web:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
 volumes:
   kvrocks-data:
