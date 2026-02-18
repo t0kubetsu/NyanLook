@@ -1,15 +1,16 @@
 services:
   api:
-    build: .
+    build: api
     container_name: api
     ports:
       - "8000:8000"
     volumes:
-      - ./api:/app/api
-      - ./requirements.txt:/app/requirements.txt:ro
+      - ./api/api:/app/api
+      - ./api/requirements.txt:/app/requirements.txt:ro
     environment:
       - KVROCKS_HOST=kvrocks
       - KVROCKS_PORT=6666
+      - CORS_ORIGINS=http://localhost:3000
     depends_on:
       - kvrocks
 
