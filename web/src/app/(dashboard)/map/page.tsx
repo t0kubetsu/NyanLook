@@ -26,6 +26,7 @@ export default function MapPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [details, setDetails] = useState<DeviceDetails | null>(null);
   const [locationHistory, setLocationHistory] = useState<LocationPoint[]>([]);
+  const [trailLimit, setTrailLimit] = useState<number>(100);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -64,27 +65,48 @@ export default function MapPage() {
   }, [loadDevices]);
 
   // ── Select device — fetch details + history in parallel ────────────────────
-  const selectDevice = useCallback(async (deviceId: string) => {
-    setActiveId(deviceId);
-    setDetails(null);
-    setLocationHistory([]);
-    setHistoryLoading(true);
+  const selectDevice = useCallback(
+    async (deviceId: string) => {
+      setActiveId(deviceId);
+      setDetails(null);
+      setLocationHistory([]);
+      setHistoryLoading(true);
 
-    const token = getToken();
-    if (!token) return;
+      const token = getToken();
+      if (!token) return;
 
-    // Fire both requests at the same time
-    const [detailsResult, historyResult] = await Promise.allSettled([
-      fetchDeviceDetails(token, deviceId),
-      fetchLocationHistory(token, deviceId, 100),
-    ]);
+      // Fire both requests at the same time
+      const [detailsResult, historyResult] = await Promise.allSettled([
+        fetchDeviceDetails(token, deviceId),
+        fetchLocationHistory(token, deviceId, trailLimit),
+      ]);
 
-    if (detailsResult.status === "fulfilled") setDetails(detailsResult.value);
-    if (historyResult.status === "fulfilled")
-      setLocationHistory(historyResult.value);
+      if (detailsResult.status === "fulfilled") setDetails(detailsResult.value);
+      if (historyResult.status === "fulfilled")
+        setLocationHistory(historyResult.value);
 
-    setHistoryLoading(false);
-  }, []);
+      setHistoryLoading(false);
+    },
+    [trailLimit],
+  );
+
+  const changeTrailLimit = useCallback(
+    async (limit: number) => {
+      setTrailLimit(limit);
+      if (!activeId) return;
+      setLocationHistory([]);
+      setHistoryLoading(true);
+      const token = getToken();
+      if (!token) return;
+      try {
+        const history = await fetchLocationHistory(token, activeId, limit);
+        setLocationHistory(history);
+      } finally {
+        setHistoryLoading(false);
+      }
+    },
+    [activeId],
+  );
 
   // ── Close panel ─────────────────────────────────────────────────────────────
   const closePanel = useCallback(() => {
@@ -171,6 +193,8 @@ export default function MapPage() {
             details={details}
             historyCount={locationHistory.length}
             historyLoading={historyLoading}
+            trailLimit={trailLimit}
+            onTrailLimitChange={changeTrailLimit}
             onClose={closePanel}
           />
         )}
@@ -180,11 +204,8 @@ export default function MapPage() {
       {!loading && devices.length > 0 && (
         <nav className="flex-none flex gap-2 px-4 py-2.5 bg-[#111318]/90 border-t border-[#1e2230] overflow-x-auto backdrop-blur">
           {devices.map((device) => {
-            const platform = (
-              device.summary?.platform ?? ""
-            ).toLowerCase();
-            const name =
-              device.display_name ?? device.device_id.slice(0, 14);
+            const platform = (device.summary?.platform ?? "").toLowerCase();
+            const name = device.display_name ?? device.device_id.slice(0, 14);
             const isActive = device.active;
             return (
               <button

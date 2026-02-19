@@ -105,8 +105,12 @@ export default function DeviceMap({
 
     for (const device of devices) {
       const { device_id, location, active } = device;
-      if (!location || typeof location !== 'object') continue;
-      if (!Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) continue;
+      if (!location || typeof location !== "object") continue;
+      if (
+        !Number.isFinite(location.latitude) ||
+        !Number.isFinite(location.longitude)
+      )
+        continue;
       seen.add(device_id);
       const platform = device.summary?.platform ?? "";
       const existing = markersRef.current.get(device_id);
@@ -130,7 +134,7 @@ export default function DeviceMap({
         markersRef.current.delete(id);
       }
     }
-  }, [devices, activeId]);
+  }, [devices]);
 
   // ── Draw location history ──────────────────────────────────────────────────
   useEffect(() => {
@@ -193,10 +197,14 @@ export default function DeviceMap({
     if (!activeId || !mapRef.current || locationHistory.length > 0) return;
     const device = devices.find((d) => d.device_id === activeId);
     if (device) {
-      if (!device.location || typeof device.location !== 'object') return;
-      mapRef.current.flyTo([device.location.latitude, device.location.longitude], 13, {
-        duration: 1,
-      });
+      if (!device.location || typeof device.location !== "object") return;
+      mapRef.current.flyTo(
+        [device.location.latitude, device.location.longitude],
+        13,
+        {
+          duration: 1,
+        },
+      );
     }
   }, [activeId, devices, locationHistory]);
 

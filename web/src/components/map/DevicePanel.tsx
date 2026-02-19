@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { Device, DeviceDetails } from "@/types/device";
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
   details: DeviceDetails | null;
   historyCount: number;
   historyLoading: boolean;
+  trailLimit: number;
+  onTrailLimitChange: (limit: number) => void;
   onClose: () => void;
 }
 
@@ -71,14 +74,19 @@ export default function DevicePanel({
   details,
   historyCount,
   historyLoading,
+  trailLimit,
+  onTrailLimitChange,
   onClose,
 }: Props) {
+  const [draftLimit, setDraftLimit] = useState(trailLimit);
+  useEffect(() => setDraftLimit(trailLimit), [trailLimit]);
+
   const summary = device.summary ?? {};
   const platform = (details?.platform ?? summary.platform ?? "").toLowerCase();
   const displayName = device.display_name ?? device.device_id;
   const hasLocation = device.location !== null;
   const lastSeen = hasLocation
-    ? new Date(device.location!.timestamp).toLocaleString()
+    ? new Date(device.location?.timestamp ?? 0).toLocaleString()
     : null;
   const info = { ...summary, ...details };
 
@@ -107,37 +115,65 @@ export default function DevicePanel({
       </div>
 
       {/* History status bar */}
-      <div className="px-5 py-2.5 border-b border-[#1e2230] flex items-center gap-2 flex-shrink-0 bg-[#0d1017]">
-        {historyLoading ? (
-          <>
-            <span className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <span className="font-mono text-[10px] text-slate-500">
-              Loading location trail…
-            </span>
-          </>
-        ) : (
-          <>
-            {/* Trail icon */}
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#00e5ff"
-              strokeWidth="2.5"
-              className="flex-shrink-0"
-              aria-labelledby="trail-icon-title"
-            >
-              <title id="trail-icon-title">Location trail</title>
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
-            <span className="font-mono text-[10px] text-slate-400">
-              Location trail &mdash;&nbsp;
-              <span className="text-cyan-400 font-bold">{historyCount}</span>{" "}
-              points
-            </span>
-          </>
-        )}
+      <div className="px-5 py-2.5 border-b border-[#1e2230] flex-shrink-0 bg-[#0d1017]">
+        {/* Top row: icon + loading/count */}
+        <div className="flex items-center gap-2 mb-2">
+          {historyLoading ? (
+            <>
+              <span className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <span className="font-mono text-[10px] text-slate-500">
+                Loading location trail…
+              </span>
+            </>
+          ) : (
+            <>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#00e5ff"
+                strokeWidth="2.5"
+                className="flex-shrink-0"
+                aria-labelledby="trail-icon-title"
+              >
+                <title id="trail-icon-title">Location trail</title>
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              <span className="font-mono text-[10px] text-slate-400">
+                Location trail &mdash;&nbsp;
+                <span className="text-cyan-400 font-bold">{historyCount}</span>{" "}
+                points
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Trail limit picker */}
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+            Trail
+          </span>
+          <input
+            type="number"
+            min={0}
+            max={10000}
+            value={draftLimit}
+            onChange={(e) => setDraftLimit(Number(e.target.value))}
+            onBlur={() => {
+              const val = Math.max(0, Math.min(10000, draftLimit));
+              setDraftLimit(val);
+              onTrailLimitChange(val);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+            className="w-20 font-mono text-[10px] px-2 py-0.5 rounded border border-[#1e2230] bg-[#0a0c10] text-cyan-300 text-center
+    focus:outline-none focus:border-cyan-500
+    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          <span className="font-mono text-[9px] text-slate-600">pts</span>
+        </div>
       </div>
 
       {/* Body */}
@@ -151,8 +187,14 @@ export default function DevicePanel({
 
         {hasLocation && (
           <Section title="Location">
-            <Row label="Latitude" value={device.location!.latitude.toFixed(6)} />
-            <Row label="Longitude" value={device.location!.longitude.toFixed(6)} />
+            <Row
+              label="Latitude"
+              value={device.location?.latitude.toFixed(6)}
+            />
+            <Row
+              label="Longitude"
+              value={device.location?.longitude.toFixed(6)}
+            />
             <Row label="Last seen" value={lastSeen} />
           </Section>
         )}
