@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DevicePanel from "@/components/map/DevicePanel";
+import TimelineBar from "@/components/map/TimelineBar";
 import {
   ApiError,
   fetchDeviceDetails,
@@ -30,6 +31,7 @@ export default function MapPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [visibleHistory, setVisibleHistory] = useState<LocationPoint[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -70,6 +72,7 @@ export default function MapPage() {
       setActiveId(deviceId);
       setDetails(null);
       setLocationHistory([]);
+      setVisibleHistory([]);
       setHistoryLoading(true);
 
       const token = getToken();
@@ -82,8 +85,10 @@ export default function MapPage() {
       ]);
 
       if (detailsResult.status === "fulfilled") setDetails(detailsResult.value);
-      if (historyResult.status === "fulfilled")
+      if (historyResult.status === "fulfilled") {
         setLocationHistory(historyResult.value);
+        setVisibleHistory(historyResult.value);
+      }
 
       setHistoryLoading(false);
     },
@@ -113,6 +118,7 @@ export default function MapPage() {
     setActiveId(null);
     setDetails(null);
     setLocationHistory([]);
+    setVisibleHistory([]);
   }, []);
 
   function logout() {
@@ -180,9 +186,15 @@ export default function MapPage() {
               <DeviceMap
                 devices={devices}
                 activeId={activeId}
-                locationHistory={locationHistory}
+                locationHistory={visibleHistory}
                 onSelect={selectDevice}
               />
+              {activeId && locationHistory.length > 0 && (
+                <TimelineBar
+                  history={locationHistory}
+                  onChange={setVisibleHistory}
+                />
+              )}
             </div>
           )}
         </div>
