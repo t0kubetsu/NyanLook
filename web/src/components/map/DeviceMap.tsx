@@ -13,11 +13,12 @@ function platformEmoji(platform: string): string {
   return "📱";
 }
 
-function makeIcon(platform: string, active: boolean): L.DivIcon {
+function makeIcon(platform: string, active: boolean, selected: boolean, hasSelection: boolean): L.DivIcon {
   const emoji = platformEmoji(platform);
   const borderColor = active ? "#00e5ff" : "#ff4d6d";
   const glowColor = active ? "rgba(0,229,255,.4)" : "rgba(255,77,109,.5)";
   const bg = active ? "rgba(0,229,255,.12)" : "rgba(255,77,109,.18)";
+  const opacity = !hasSelection || selected ? 1 : 0.35;
   return L.divIcon({
     className: "",
     html: `<div style="
@@ -25,7 +26,8 @@ function makeIcon(platform: string, active: boolean): L.DivIcon {
         border:2px solid ${borderColor};background:${bg};
         box-shadow:0 0 14px ${glowColor};
         display:flex;align-items:center;justify-content:center;
-        font-size:18px;cursor:pointer;position:relative;">
+        font-size:18px;cursor:pointer;position:relative;
+        opacity:${opacity};">
         ${emoji}
         <span style="position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
           border:5px solid transparent;border-top-color:${borderColor};"></span>
@@ -117,10 +119,10 @@ export default function DeviceMap({
 
       if (existing) {
         existing.setLatLng([location.latitude, location.longitude]);
-        existing.setIcon(makeIcon(platform, active));
+        existing.setIcon(makeIcon(platform, active, device_id === activeId, activeId !== null));
       } else {
         const marker = L.marker([location.latitude, location.longitude], {
-          icon: makeIcon(platform, active),
+          icon: makeIcon(platform, active, device_id === activeId, activeId !== null),
         })
           .addTo(map)
           .on("click", () => onSelectRef.current(device_id));
@@ -134,7 +136,7 @@ export default function DeviceMap({
         markersRef.current.delete(id);
       }
     }
-  }, [devices]);
+  }, [devices, activeId]);
 
   // ── Draw location history ──────────────────────────────────────────────────
   useEffect(() => {

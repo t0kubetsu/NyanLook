@@ -213,9 +213,13 @@ export default function MapPage() {
                 type="button"
                 onClick={() => selectDevice(device.device_id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1e2230] bg-[#0a0c10] flex-shrink-0 transition-colors text-left ${
-                  isActive
-                    ? "hover:border-cyan-500/50"
-                    : "hover:border-rose-500/50"
+                  device.device_id === activeId
+                    ? isActive
+                      ? "border-cyan-500/70 bg-cyan-500/5"
+                      : "border-rose-500/70 bg-rose-500/5"
+                    : isActive
+                      ? "border-[#1e2230] hover:border-cyan-500/50"
+                      : "border-[#1e2230] hover:border-rose-500/50"
                 }`}
               >
                 <span
