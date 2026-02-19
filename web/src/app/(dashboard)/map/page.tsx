@@ -211,7 +211,7 @@ export default function MapPage() {
               <button
                 key={device.device_id}
                 type="button"
-                onClick={() => selectDevice(device.device_id)}
+                onClick={() => device.device_id === activeId ? closePanel() : selectDevice(device.device_id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1e2230] bg-[#0a0c10] flex-shrink-0 transition-colors text-left ${
                   device.device_id === activeId
                     ? isActive
