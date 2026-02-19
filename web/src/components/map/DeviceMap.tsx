@@ -13,7 +13,12 @@ function platformEmoji(platform: string): string {
   return "📱";
 }
 
-function makeIcon(platform: string, active: boolean, selected: boolean, hasSelection: boolean): L.DivIcon {
+function makeIcon(
+  platform: string,
+  active: boolean,
+  selected: boolean,
+  hasSelection: boolean,
+): L.DivIcon {
   const emoji = platformEmoji(platform);
   const borderColor = active ? "#00e5ff" : "#ff4d6d";
   const glowColor = active ? "rgba(0,229,255,.4)" : "rgba(255,77,109,.5)";
@@ -119,10 +124,17 @@ export default function DeviceMap({
 
       if (existing) {
         existing.setLatLng([location.latitude, location.longitude]);
-        existing.setIcon(makeIcon(platform, active, device_id === activeId, activeId !== null));
+        existing.setIcon(
+          makeIcon(platform, active, device_id === activeId, activeId !== null),
+        );
       } else {
         const marker = L.marker([location.latitude, location.longitude], {
-          icon: makeIcon(platform, active, device_id === activeId, activeId !== null),
+          icon: makeIcon(
+            platform,
+            active,
+            device_id === activeId,
+            activeId !== null,
+          ),
         })
           .addTo(map)
           .on("click", () => onSelectRef.current(device_id));
