@@ -1,21 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LocationPoint } from "@/types/device";
 
 interface Props {
   history: LocationPoint[];
   onChange: (visible: LocationPoint[]) => void;
+  windowHours: number | "all" | "custom";
+  onWindowHoursChange: (w: number | "all" | "custom") => void;
+  customHours: number;
+  onCustomHoursChange: (h: number) => void;
 }
 
-const WINDOW_HOURS_DEFAULT = 8;
 const PLAY_INTERVAL_MS = 50;
 
-export default function TimelineBar({ history, onChange }: Props) {
-  const [windowHours, setWindowHours] = useState<number | "all" | "custom">(
-    WINDOW_HOURS_DEFAULT,
-  );
-  const [customHours, setCustomHours] = useState<number>(12);
+export default function TimelineBar({
+  history,
+  onChange,
+  windowHours,
+  onWindowHoursChange,
+  customHours,
+  onCustomHoursChange,
+}: Props) {
   const [draftCustom, setDraftCustom] = useState<number>(12);
   const [inPct, setInPct] = useState(0); // left trim handle 0–100
   const [outPct, setOutPct] = useState(100); // right trim handle 0–100
@@ -27,7 +33,7 @@ export default function TimelineBar({ history, onChange }: Props) {
   const dragging = useRef<"in" | "out" | "head" | null>(null);
 
   // ── Windowed subset ─────────────────────────────────────────────────────────
-  const windowed = (() => {
+  const windowed = useMemo(() => {
     if (history.length === 0) return [];
     const sorted = [...history].sort((a, b) => a.timestamp - b.timestamp);
     if (windowHours === "all") return sorted;
@@ -35,18 +41,25 @@ export default function TimelineBar({ history, onChange }: Props) {
     const hours = windowHours === "custom" ? customHours : windowHours;
     const cutoff = newest - hours * 3_600_000;
     return sorted.filter((p) => p.timestamp >= cutoff);
-  })();
+  }, [history, windowHours, customHours]);
 
-  const minTs = windowed.length ? windowed[0].timestamp : 0;
-  const maxTs = windowed.length ? windowed[windowed.length - 1].timestamp : 1;
-  const span = maxTs - minTs || 1;
+  const minTs = useMemo(
+    () => (windowed.length ? windowed[0].timestamp : 0),
+    [windowed],
+  );
+  const maxTs = useMemo(
+    () => (windowed.length ? windowed[windowed.length - 1].timestamp : 1),
+    [windowed],
+  );
+  const span = useMemo(() => maxTs - minTs || 1, [minTs, maxTs]);
 
-  const pctToTs = (pct: number) => minTs + (pct / 100) * span;
+  const pctToTs = useCallback(
+    (pct: number) => minTs + (pct / 100) * span,
+    [minTs, span],
+  );
   const tsToPct = (ts: number) => ((ts - minTs) / span) * 100;
 
   const fmt = (ts: number) =>
-    // new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" }) +
-    // " " +
     new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const fmtFull = (ts: number) =>
@@ -67,8 +80,7 @@ export default function TimelineBar({ history, onChange }: Props) {
     const from = pctToTs(inPct);
     const to = pctToTs(headPct);
     onChange(windowed.filter((p) => p.timestamp >= from && p.timestamp <= to));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headPct, inPct, windowed.length, windowed.filter, onChange]);
+  }, [headPct, inPct, windowed, pctToTs, onChange]);
 
   // ── Drag handling ───────────────────────────────────────────────────────────
   const pctFromEvent = useCallback((e: MouseEvent | TouchEvent) => {
@@ -181,11 +193,13 @@ export default function TimelineBar({ history, onChange }: Props) {
         >
           {playing ? (
             <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor">
+              <title>Pause</title>
               <rect x="0.5" y="0.5" width="3" height="8" rx="0.5" />
               <rect x="5.5" y="0.5" width="3" height="8" rx="0.5" />
             </svg>
           ) : (
             <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor">
+              <title>Play</title>
               <polygon points="1,0.5 9,4.5 1,8.5" />
             </svg>
           )}
@@ -213,7 +227,7 @@ export default function TimelineBar({ history, onChange }: Props) {
               key={String(h)}
               type="button"
               onClick={() => {
-                setWindowHours(h);
+                onWindowHoursChange(h);
                 stopPlay();
                 setInPct(0);
                 setOutPct(100);
@@ -241,7 +255,7 @@ export default function TimelineBar({ history, onChange }: Props) {
                 onBlur={() => {
                   const val = Math.max(1, Math.min(8760, draftCustom));
                   setDraftCustom(val);
-                  setCustomHours(val);
+                  onCustomHoursChange(val);
                   setInPct(0);
                   setOutPct(100);
                   setHeadPct(100);
@@ -278,16 +292,28 @@ export default function TimelineBar({ history, onChange }: Props) {
         {/* Main track area */}
         <div
           ref={trackRef}
+          role="slider"
+          aria-label="Playhead position"
+          aria-valuenow={Math.round(headPct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          tabIndex={0}
           className="relative h-9 rounded-md overflow-visible cursor-crosshair"
           onClick={(e) => {
             if (dragging.current) return;
-            const rect = trackRef.current!.getBoundingClientRect();
+            const rect = trackRef.current?.getBoundingClientRect();
+            if (!rect) return;
             const pct = Math.max(
               0,
               Math.min(100, ((e.clientX - rect.left) / rect.width) * 100),
             );
-            const clamped = Math.max(inPct, Math.min(outPct, pct));
-            setHeadPct(clamped);
+            setHeadPct(Math.max(inPct, Math.min(outPct, pct)));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight")
+              setHeadPct((p) => Math.min(outPct, p + 1));
+            if (e.key === "ArrowLeft")
+              setHeadPct((p) => Math.max(inPct, p - 1));
           }}
         >
           {/* Base rail */}
@@ -329,6 +355,12 @@ export default function TimelineBar({ history, onChange }: Props) {
 
           {/* ── In handle (left bracket) ── */}
           <div
+            role="slider"
+            aria-label="In point"
+            aria-valuenow={Math.round(inPct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            tabIndex={0}
             className="absolute top-0 bottom-0 w-3 flex items-center justify-center cursor-ew-resize z-20 group"
             style={{ left: `${inPct}%`, transform: "translateX(-50%)" }}
             onMouseDown={() => {
@@ -336,6 +368,11 @@ export default function TimelineBar({ history, onChange }: Props) {
             }}
             onTouchStart={() => {
               dragging.current = "in";
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight")
+                setInPct((p) => Math.min(p + 1, outPct - 1));
+              if (e.key === "ArrowLeft") setInPct((p) => Math.max(0, p - 1));
             }}
           >
             <div className="w-[3px] h-full bg-cyan-400 rounded-full group-hover:bg-cyan-300 transition-colors" />
@@ -346,6 +383,12 @@ export default function TimelineBar({ history, onChange }: Props) {
 
           {/* ── Out handle (right bracket) ── */}
           <div
+            role="slider"
+            aria-label="Out point"
+            aria-valuenow={Math.round(outPct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            tabIndex={0}
             className="absolute top-0 bottom-0 w-3 flex items-center justify-center cursor-ew-resize z-20 group"
             style={{ left: `${outPct}%`, transform: "translateX(-50%)" }}
             onMouseDown={() => {
@@ -353,6 +396,12 @@ export default function TimelineBar({ history, onChange }: Props) {
             }}
             onTouchStart={() => {
               dragging.current = "out";
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight")
+                setOutPct((p) => Math.min(100, p + 1));
+              if (e.key === "ArrowLeft")
+                setOutPct((p) => Math.max(inPct + 1, p - 1));
             }}
           >
             <div className="w-[3px] h-full bg-cyan-400 rounded-full group-hover:bg-cyan-300 transition-colors" />
@@ -362,15 +411,12 @@ export default function TimelineBar({ history, onChange }: Props) {
 
           {/* ── Playhead ── */}
           <div
-            className="absolute top-[-4px] bottom-[-4px] w-[2px] bg-white/90 rounded-full z-30 cursor-ew-resize
-              shadow-[0_0_8px_rgba(255,255,255,0.6)] pointer-events-none"
-            style={{ left: `${headPct}%`, transform: "translateX(-50%)" }}
-          >
-            {/* Diamond head */}
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white rotate-45 shadow-[0_0_6px_rgba(255,255,255,0.8)]" />
-          </div>
-          {/* Invisible wide hit area for playhead drag */}
-          <div
+            role="slider"
+            aria-label="Playhead"
+            aria-valuenow={Math.round(headPct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            tabIndex={0}
             className="absolute top-0 bottom-0 w-5 z-30 cursor-ew-resize"
             style={{ left: `${headPct}%`, transform: "translateX(-50%)" }}
             onMouseDown={() => {
@@ -378,6 +424,38 @@ export default function TimelineBar({ history, onChange }: Props) {
             }}
             onTouchStart={() => {
               dragging.current = "head";
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight")
+                setHeadPct((p) => Math.min(outPct, p + 1));
+              if (e.key === "ArrowLeft")
+                setHeadPct((p) => Math.max(inPct, p - 1));
+            }}
+          >
+            {/* Diamond head */}
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-white rotate-45 shadow-[0_0_6px_rgba(255,255,255,0.8)]" />
+          </div>
+          {/* Invisible wide hit area for playhead drag */}
+          <div
+            role="slider"
+            aria-label="Playhead"
+            aria-valuenow={Math.round(headPct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            tabIndex={0}
+            className="absolute top-0 bottom-0 w-5 z-30 cursor-ew-resize"
+            style={{ left: `${headPct}%`, transform: "translateX(-50%)" }}
+            onMouseDown={() => {
+              dragging.current = "head";
+            }}
+            onTouchStart={() => {
+              dragging.current = "head";
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight")
+                setHeadPct((p) => Math.min(outPct, p + 1));
+              if (e.key === "ArrowLeft")
+                setHeadPct((p) => Math.max(inPct, p - 1));
             }}
           />
         </div>

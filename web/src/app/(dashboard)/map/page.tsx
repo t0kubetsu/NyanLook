@@ -32,6 +32,8 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [visibleHistory, setVisibleHistory] = useState<LocationPoint[]>([]);
+  const [windowHours, setWindowHours] = useState<number | "all" | "custom">(8);
+  const [customHours, setCustomHours] = useState<number>(12);
   const [error, setError] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -193,6 +195,10 @@ export default function MapPage() {
                 <TimelineBar
                   history={locationHistory}
                   onChange={setVisibleHistory}
+                  windowHours={windowHours}
+                  onWindowHoursChange={setWindowHours}
+                  customHours={customHours}
+                  onCustomHoursChange={setCustomHours}
                 />
               )}
             </div>

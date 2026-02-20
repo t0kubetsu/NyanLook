@@ -208,19 +208,44 @@ export default function DeviceMap({
 
   // ── Fly to active device ───────────────────────────────────────────────────
   useEffect(() => {
-    if (!activeId || !mapRef.current || locationHistory.length > 0) return;
+    if (!activeId || !mapRef.current) return;
+    const map = mapRef.current;
     const device = devices.find((d) => d.device_id === activeId);
-    if (device) {
-      if (!device.location || typeof device.location !== "object") return;
-      mapRef.current.flyTo(
-        [device.location.latitude, device.location.longitude],
-        13,
-        {
-          duration: 1,
-        },
-      );
-    }
-  }, [activeId, devices, locationHistory]);
+    if (!device?.location || typeof device.location !== "object") return;
+    const { latitude, longitude } = device.location;
+
+    const timer = setTimeout(() => {
+      map.invalidateSize({ animate: false });
+
+      if (locationHistory.length <= 1) {
+        map.flyTo([latitude, longitude], 17, { duration: 1.2 });
+        return;
+      }
+
+      map.flyTo([latitude, longitude], 15, { duration: 1 });
+
+      const onMoveEnd = () => {
+        map.off("moveend", onMoveEnd);
+        const sorted = [...locationHistory].sort(
+          (a, b) => a.timestamp - b.timestamp,
+        );
+        const bounds = L.latLngBounds(
+          sorted.map((p) => [p.latitude, p.longitude] as L.LatLngTuple),
+        );
+        const mapBounds = map.getBounds();
+        if (mapBounds.contains(bounds)) return;
+        map.flyToBounds(bounds, {
+          padding: [60, 60],
+          maxZoom: 17,
+          duration: 1.2,
+        });
+      };
+
+      map.once("moveend", onMoveEnd);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [activeId, locationHistory, devices.find]);
 
   return (
     <>
