@@ -6,9 +6,6 @@ RUN npm install -g pnpm && pnpm install
 
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
 RUN pnpm build
 
 FROM node:latest AS runner

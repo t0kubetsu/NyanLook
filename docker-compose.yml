@@ -2,19 +2,12 @@ services:
   api:
     build: nyanlook_api
     container_name: nyanlook_api
+    env_file: nyanlook_api/.env
     ports:
       - "8000:8000"
     volumes:
       - ./nyanlook_api/api:/app/api
       - ./nyanlook_api/requirements.txt:/app/requirements.txt:ro
-    environment:
-      - KVROCKS_HOST=kvrocks
-      - KVROCKS_PORT=6666
-      - CORS_ORIGINS=http://localhost:3000
-      - JWT_SECRET_KEY=changeme-use-a-real-secret-in-prod
-      - APP_USERNAME=admin
-      - APP_PASSWORD_HASH=$$2b$$12$$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW
-      - JWT_EXPIRE_MINUTES=1440
     depends_on:
       - kvrocks
 
@@ -27,10 +20,7 @@ services:
       - kvrocks-data:/var/lib/kvrocks
 
   web:
-    build:
-      context: ./nyanlook_web
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+    build: nyanlook_web
     container_name: nyanlook_web
     ports:
       - "3000:3000"

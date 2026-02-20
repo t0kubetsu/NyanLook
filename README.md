@@ -35,6 +35,17 @@ It supports:
 * Docker
 * Docker Compose
 
+### 2️⃣ Setup Environment Files
+
+Before building, copy the example `.env` files and edit them to match your infrastructure:
+
+```bash
+cp nyanlook_api/.env.example nyanlook_api/.env
+cp nyanlook_web/.env.example nyanlook_web/.env
+```
+
+Open the two `.env` files and adjust values such as `NEXT_PUBLIC_API_URL` and any database or secret settings to fit your environment.
+
 ### 2️⃣ Build & Run Everything
 
 ```bash
