@@ -1,6 +1,7 @@
 services:
   api:
     build: nyanlook_api
+    restart: unless-stopped
     container_name: nyanlook_api
     env_file: nyanlook_api/.env
     ports:
@@ -13,6 +14,7 @@ services:
 
   kvrocks:
     image: apache/kvrocks:latest
+    restart: unless-stopped
     container_name: nyanlook_kvrocks
     ports:
       - "6666:6666"
@@ -21,6 +23,7 @@ services:
 
   web:
     build: nyanlook_web
+    restart: unless-stopped
     container_name: nyanlook_web
     ports:
       - "3000:3000"
