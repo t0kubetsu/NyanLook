@@ -203,7 +203,7 @@ export default function DeviceMap({
       dot.addTo(layer);
     });
 
-    map.fitBounds(L.latLngBounds(latlngs), { padding: [60, 60], maxZoom: 16 });
+    map.fitBounds(L.latLngBounds(latlngs), { padding: [60, 60], maxZoom: 19 });
   }, [locationHistory]);
 
   // ── Fly to active device ───────────────────────────────────────────────────
@@ -218,11 +218,11 @@ export default function DeviceMap({
       map.invalidateSize({ animate: false });
 
       if (locationHistory.length <= 1) {
-        map.flyTo([latitude, longitude], 17, { duration: 1.2 });
+        map.flyTo([latitude, longitude], 19, { duration: 1.2 });
         return;
       }
 
-      map.flyTo([latitude, longitude], 15, { duration: 1 });
+      map.flyTo([latitude, longitude], 19, { duration: 1 });
 
       const onMoveEnd = () => {
         map.off("moveend", onMoveEnd);
@@ -236,7 +236,7 @@ export default function DeviceMap({
         if (mapBounds.contains(bounds)) return;
         map.flyToBounds(bounds, {
           padding: [60, 60],
-          maxZoom: 17,
+          maxZoom: 19,
           duration: 1.2,
         });
       };
