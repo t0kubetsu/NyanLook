@@ -27,10 +27,17 @@ export default function TimelineBar({
   const [outPct, setOutPct] = useState(100); // right trim handle 0–100
   const [headPct, setHeadPct] = useState(100); // playhead 0–100
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState<number>(1);
+  const [draftSpeed, setDraftSpeed] = useState<number>(1);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const playRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const speedRef = useRef(speed);
   const dragging = useRef<"in" | "out" | "head" | null>(null);
+
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
 
   // ── Windowed subset ─────────────────────────────────────────────────────────
   const windowed = useMemo(() => {
@@ -135,9 +142,8 @@ export default function TimelineBar({
     setHeadPct(startFrom);
     setPlaying(true);
     const rangeSpan = outPct - inPct;
-    // advance ~1% of range per tick → full sweep in ~rangeSpan * 50ms
-    const step = rangeSpan / 120;
     playRef.current = setInterval(() => {
+      const step = (rangeSpan / 120) * speedRef.current;
       setHeadPct((prev) => {
         const next = prev + step;
         if (next >= outPct) {
@@ -204,6 +210,34 @@ export default function TimelineBar({
             </svg>
           )}
         </button>
+
+        {/* Speed control */}
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-[9px] text-slate-600 uppercase tracking-widest">
+            Speed
+          </span>
+          <input
+            type="number"
+            min={0.001}
+            max={50}
+            step={0.001}
+            value={draftSpeed}
+            onChange={(e) => setDraftSpeed(Number(e.target.value))}
+            onBlur={() => {
+              const val = Math.max(0.001, Math.min(50, draftSpeed));
+              setDraftSpeed(val);
+              setSpeed(val);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+            className="w-12 font-mono text-[9px] px-1.5 py-0.5 rounded border border-[#1e2230]
+      bg-[#0a0c10] text-cyan-300 text-center focus:outline-none focus:border-cyan-500
+      [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none
+      [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          <span className="font-mono text-[9px] text-slate-600">×</span>
+        </div>
 
         {/* Current playhead time */}
         <div className="flex items-baseline gap-1.5">
