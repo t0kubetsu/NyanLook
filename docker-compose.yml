@@ -1,12 +1,12 @@
 services:
   api:
-    build: api
-    container_name: api
+    build: nyanlook_api
+    container_name: nyanlook_api
     ports:
       - "8000:8000"
     volumes:
-      - ./api/api:/app/api
-      - ./api/requirements.txt:/app/requirements.txt:ro
+      - ./nyanlook_api/api:/app/api
+      - ./nyanlook_api/requirements.txt:/app/requirements.txt:ro
     environment:
       - KVROCKS_HOST=kvrocks
       - KVROCKS_PORT=6666
@@ -20,7 +20,7 @@ services:
 
   kvrocks:
     image: apache/kvrocks:latest
-    container_name: kvrocks
+    container_name: nyanlook_kvrocks
     ports:
       - "6666:6666"
     volumes:
@@ -28,10 +28,10 @@ services:
 
   web:
     build:
-      context: ./web
+      context: ./nyanlook_web
       args:
         NEXT_PUBLIC_API_URL: http://localhost:8000
-    container_name: web
+    container_name: nyanlook_web
     ports:
       - "3000:3000"
     depends_on:

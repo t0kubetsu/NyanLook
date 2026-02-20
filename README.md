@@ -20,8 +20,8 @@ It supports:
 
 ```
 .
-├── api              # FastAPI backend (NyanLook API)
-├── web              # Next.js frontend (NyanLook Frontend)
+├── nyanlook_api              # FastAPI backend
+├── nyanlook_web              # Next.js frontend
 ├── docker-compose.yml
 └── README.md 
 ```
@@ -43,5 +43,5 @@ docker compose up --build
 
 Services:
 
-* API → [http://localhost:8000](http://localhost:8000)
-* Frontend → [http://localhost:3000](http://localhost:3000)
+* NyanLook API → [http://localhost:8000](http://localhost:8000)
+* NyanLook Frontend → [http://localhost:3000](http://localhost:3000)

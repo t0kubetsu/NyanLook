@@ -3,8 +3,8 @@
 __pycache__
 
 # dependencies
-web/node_modules
-web/.pnp
+nyanlook_web/node_modules
+nyanlook_web/.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -13,14 +13,14 @@ web/.pnp
 !.yarn/versions
 
 # testing
-web/coverage
+nyanlook_web/coverage
 
 # next.js
-web/.next/
-web/out/
+nyanlook_web/.next/
+nyanlook_web/out/
 
 # production
-web/build
+nyanlook_web/build
 
 # misc
 .DS_Store
